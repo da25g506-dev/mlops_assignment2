@@ -1,0 +1,17 @@
+# Stage 1: base with pinned training dependencies
+FROM python:3.11-slim AS base
+WORKDIR /app
+COPY requirements/train.txt .
+RUN pip install --no-cache-dir -r train.txt
+
+# Stage 2: training runtime — copy only the app code needed to train
+FROM base AS training
+COPY src/model.py src/dataset.py src/train.py ./src/
+COPY configs/ ./configs/
+
+ENV PYTHONUNBUFFERED=1
+ENV TRAINING_CONFIG_PATH=/app/configs/training_config.yaml
+
+# /app/data and /app/checkpoints are expected to be mounted volumes
+# (see docker/README verification commands and k8s/training-job.yaml).
+ENTRYPOINT ["python", "src/train.py"]

@@ -1,0 +1,99 @@
+# Bonus (Part D, +5 pts): GPU-enabled variant of the training Job.
+#
+# This is an alternate to training-job.yaml for clusters that have GPU
+# nodes available (e.g. a cloud GKE/EKS node pool with NVIDIA GPUs, or a
+# bare-metal cluster with the NVIDIA device plugin installed). It adds:
+#   - a `nvidia.com/gpu: 1` resource request/limit
+#   - a nodeSelector restricting scheduling to GPU-labeled nodes
+#   - a toleration for the standard `nvidia.com/gpu=present:NoSchedule` taint
+#     that GPU node pools are commonly tainted with
+#
+# It is not applied during the kind-based local validation in this repo
+# (kind nodes have no GPUs), but is included to satisfy the bonus
+# requirement and to show how the base manifest would be adapted for a
+# real GPU cluster.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: training-data-pvc
+  namespace: ml-training
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-checkpoints-pvc
+  namespace: ml-training
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cifar10-training-job-gpu
+  namespace: ml-training
+  labels:
+    project: mlops-pytorch-pipeline
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        project: mlops-pytorch-pipeline
+        role: training
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        accelerator: nvidia-gpu
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Equal
+          value: present
+          effect: NoSchedule
+      containers:
+        - name: trainer
+          image: mlops-train:v1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TRAINING_CONFIG_PATH
+              value: /app/configs/training_config.yaml
+            - name: OMP_NUM_THREADS
+              value: "2"
+            - name: MKL_NUM_THREADS
+              value: "2"
+          volumeMounts:
+            - name: training-config
+              mountPath: /app/configs
+              readOnly: true
+            - name: training-data
+              mountPath: /app/data
+            - name: model-checkpoints
+              mountPath: /app/checkpoints
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              nvidia.com/gpu: 1
+            limits:
+              cpu: "2"
+              memory: 4Gi
+              nvidia.com/gpu: 1
+      volumes:
+        - name: training-config
+          configMap:
+            name: training-config
+        - name: training-data
+          persistentVolumeClaim:
+            claimName: training-data-pvc
+        - name: model-checkpoints
+          persistentVolumeClaim:
+            claimName: model-checkpoints-pvc

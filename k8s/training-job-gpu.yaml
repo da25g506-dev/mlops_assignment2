@@ -66,6 +66,10 @@ spec:
           env:
             - name: TRAINING_CONFIG_PATH
               value: /app/configs/training_config.yaml
+            - name: OMP_NUM_THREADS
+              value: "2"
+            - name: MKL_NUM_THREADS
+              value: "2"
           volumeMounts:
             - name: training-config
               mountPath: /app/configs

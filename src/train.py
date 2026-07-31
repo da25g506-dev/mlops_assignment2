@@ -165,7 +165,10 @@ def main():
                 print(json.dumps({"event": "early_stopping", "epoch": epoch + 1}), flush=True)
                 break
 
-    print(json.dumps({"event": "training_complete", "best_val_loss": round(best_val_loss, 4)}), flush=True)
+    print(
+        json.dumps({"event": "training_complete", "best_val_loss": round(best_val_loss, 4)}),
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

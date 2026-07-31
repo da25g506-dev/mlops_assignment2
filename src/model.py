@@ -1,6 +1,12 @@
 """CNN model definitions for CIFAR-10 / Fashion-MNIST classification."""
+import torch
 import torch.nn as nn
 from torchvision.models import resnet18
+
+# Some AMD EPYC hosts hit a SIGFPE inside MKL-DNN's convolution kernel
+# (oneDNN CPU-dispatch bug); disabling the MKL-DNN backend avoids it at a
+# small CPU perf cost and has no effect on correctness or GPU execution.
+torch.backends.mkldnn.enabled = False
 
 
 def _resnet18_for_small_images(num_classes: int, pretrained: bool = False) -> nn.Module:

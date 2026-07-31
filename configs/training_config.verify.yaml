@@ -1,0 +1,19 @@
+model:
+  architecture: resnet18
+  num_classes: 10
+
+training:
+  epochs: 1
+  batch_size: 128
+  learning_rate: 0.001
+  early_stopping_patience: 3
+  num_workers: 2
+
+data:
+  dataset: cifar10
+  data_dir: /app/data
+  subset_fraction: 0.05
+
+output:
+  checkpoint_dir: /app/checkpoints
+  model_name: classifier_v1.pt

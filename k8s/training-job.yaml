@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: training-data-pvc
+  namespace: ml-training
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-checkpoints-pvc
+  namespace: ml-training
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cifar10-training-job
+  namespace: ml-training
+  labels:
+    project: mlops-pytorch-pipeline
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        project: mlops-pytorch-pipeline
+        role: training
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: trainer
+          image: mlops-train:v1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TRAINING_CONFIG_PATH
+              value: /app/configs/training_config.yaml
+            # PyTorch defaults its intra-op thread pool to the number of CPUs
+            # visible on the *host* (16 here), not the pod's CFS quota (2
+            # cores below). Left unset, that mismatch causes severe CPU
+            # throttling as 16 threads contend for a 2-core quota. Pinning
+            # thread count to the CPU request/limit avoids the thrash.
+            - name: OMP_NUM_THREADS
+              value: "2"
+            - name: MKL_NUM_THREADS
+              value: "2"
+          volumeMounts:
+            - name: training-config
+              mountPath: /app/configs
+              readOnly: true
+            - name: training-data
+              mountPath: /app/data
+            - name: model-checkpoints
+              mountPath: /app/checkpoints
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+      volumes:
+        - name: training-config
+          configMap:
+            name: training-config
+        - name: training-data
+          persistentVolumeClaim:
+            claimName: training-data-pvc
+        - name: model-checkpoints
+          persistentVolumeClaim:
+            claimName: model-checkpoints-pvc

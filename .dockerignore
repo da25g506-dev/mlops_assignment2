@@ -1,0 +1,12 @@
+.git/
+.github/
+data/
+checkpoints/
+venv/
+.venv/
+__pycache__/
+*.pyc
+tests/
+k8s/
+*.md
+.gitignore

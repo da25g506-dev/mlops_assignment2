@@ -3,7 +3,8 @@
 ## Repository
 
 - **GitHub repo:** https://github.com/da25g506-dev/mlops_assignment2
-- **Final PR (end-to-end validation, screenshots/logs):** _link added after the PR is opened_
+- **Final PR (Kubernetes manifests + end-to-end validation on a live cluster):** https://github.com/da25g506-dev/mlops_assignment2/pull/4
+- **Release PR (develop -> main):** https://github.com/da25g506-dev/mlops_assignment2/pull/5
 
 ## What was built
 

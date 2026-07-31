@@ -1,0 +1,30 @@
+# Stage 1: base with pinned inference-only dependencies
+FROM python:3.11-slim AS base
+WORKDIR /app
+COPY requirements/serve.txt .
+RUN pip install --no-cache-dir -r serve.txt
+
+# Stage 2: serving runtime
+FROM base AS serving
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY src/model.py src/dataset.py src/serve.py ./src/
+
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/false --create-home appuser && \
+    mkdir -p /app/checkpoints && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+ENV PYTHONUNBUFFERED=1
+ENV CHECKPOINT_PATH=/app/checkpoints/classifier_v1.pt
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["uvicorn", "src.serve:app", "--host", "0.0.0.0", "--port", "8080"]

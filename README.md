@@ -126,6 +126,43 @@ Training emits JSON-line events to stdout (`config_loaded`,
 `early_stopping`/`training_complete`) and writes the best checkpoint to
 `checkpoints/classifier_v1.pt`.
 
+### Full training run (real evidence, not a smoke test)
+
+The shipped `configs/training_config.yaml` (ResNet-18, 10 epochs, batch
+size 64, full 50,000-image CIFAR-10 train set, `subset_fraction: 1.0`) was
+run to completion with `docker run` exactly as shown above — a genuine
+full training run, not the fast verification config. It ran for
+**~7 hours** on this CPU-only host (MKL-DNN disabled — see
+[`EXPLANATION.md`](EXPLANATION.md) — and no early stop, since validation
+loss never failed to improve for 3 consecutive epochs). Final metrics:
+
+| Epoch | Train loss | Train acc | Val loss | Val acc | Checkpoint saved? |
+|------:|-----------:|----------:|---------:|--------:|:------------------:|
+| 1 | 1.3576 | 50.56% | 1.1535 | 60.97% | ✅ |
+| 2 | 0.9017 | 68.27% | 1.0076 | 65.33% | ✅ |
+| 3 | 0.7100 | 75.18% | 1.1051 | 65.74% | |
+| 4 | 0.5916 | 79.62% | 0.6320 | 79.17% | ✅ |
+| 5 | 0.5168 | 82.14% | 0.5296 | 82.88% | ✅ |
+| 6 | 0.4574 | 84.22% | 0.5266 | 82.18% | ✅ |
+| 7 | 0.4071 | 86.02% | 0.4987 | 84.03% | ✅ |
+| **8** | **0.3722** | **87.15%** | **0.3947** | **86.79%** | ✅ **(final checkpoint)** |
+| 9 | 0.3376 | 88.32% | 0.4281 | 85.71% | |
+| 10 | 0.3108 | 89.17% | 0.3997 | 86.91% | |
+
+The best-validation-loss checkpoint (epoch 8, 86.79% val accuracy) is what
+`classifier_v1.pt` contains — epochs 9-10 trained further and reached
+slightly higher *accuracy* but higher *loss*, so per the save policy
+("save only when val_loss improves") they didn't overwrite the epoch-8
+checkpoint. Serving that checkpoint against 6 real CIFAR-10 test images
+(one per class, held out from training) correctly predicted 5/6 with high
+confidence (>99% for cat, ship, frog, truck; 99.9% for automobile); the
+one miss was an airplane image predicted as "ship" — a well-known
+CIFAR-10 confusion pair, and consistent with an 86.79%-accuracy model.
+
+See [`WALKTHROUGH.md`](WALKTHROUGH.md) for a full explanation of every
+component and [`STUDY_GUIDE.md`](STUDY_GUIDE.md) for a Q&A-style study
+guide covering the whole project.
+
 **Build the serving image:**
 
 ```bash

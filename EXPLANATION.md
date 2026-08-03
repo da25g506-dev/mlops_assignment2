@@ -17,6 +17,33 @@ locally with mounted volumes, and the full manifest set was applied to a
 live local `kind` cluster, ending with a `kubectl port-forward` + `curl
 /predict` round trip against pods running on that cluster.
 
+For a component-by-component deep dive of every file and design decision,
+see [`WALKTHROUGH.md`](WALKTHROUGH.md); for a Q&A-style study companion,
+see [`STUDY_GUIDE.md`](STUDY_GUIDE.md).
+
+## Full training run
+
+Beyond the fast verification runs used to prove the pipeline's plumbing
+works end-to-end, the shipped default config
+(`configs/training_config.yaml`: ResNet-18, 10 epochs, batch size 64, the
+**full** 50,000-image CIFAR-10 train set, `subset_fraction: 1.0`) was run
+to completion for real via `docker run` with the training image and
+mounted volumes (see `README.md` for the exact command). It ran for
+**~7 hours** on this CPU-only host — slower than a typical CPU CIFAR-10
+run both because MKL-DNN is disabled (see below) and because it is
+genuinely training on all 50,000 images for the full 10 epochs, not a
+subset. All 10 epochs completed without early stopping ever triggering;
+the best checkpoint (lowest validation loss) was saved at epoch 8,
+reaching **86.79% validation accuracy** (val_loss 0.3947); full per-epoch
+metrics are in `README.md`. Serving that checkpoint against 6 held-out
+CIFAR-10 test images (one per class, never seen during training)
+correctly classified 5 of 6 with high confidence (>99% for cat, ship,
+frog, and truck); the one miss — an airplane image predicted as "ship" —
+is a well-known CIFAR-10 confusion pair (both are often photographed
+against a plain sky/water background at a similar angle) and is
+consistent with a model at 86.79% accuracy rather than a defect in the
+pipeline.
+
 ## Most challenging part
 
 The most challenging issue wasn't in the application code — it was two

@@ -488,7 +488,7 @@ fix.**
 
 ---
 
-## J. Training run specifics (fill in after the full run completes)
+## J. Training run specifics (from the completed full run)
 
 **Q: What are the shipped default hyperparameters?**
 > A: `resnet18`, 10 epochs max (early stopping patience 3), batch size 64,
@@ -497,18 +497,52 @@ fix.**
 
 **Q: Did training actually run to the full 10 epochs, or did it stop
 early?**
-> A: See `EXPLANATION.md` / `README.md` for the actual final epoch count
-> and metrics from the completed run — early stopping means it may have
-> stopped before epoch 10 if validation loss stopped improving for 3
-> consecutive epochs.
+> A: It ran the full 10 epochs and simply hit the epoch cap — early
+> stopping (patience 3) got close but never actually triggered. Val_loss
+> improved on every epoch through epoch 8 (0.3947, the eventual best),
+> then regressed for both epoch 9 (0.4281) and epoch 10 (0.3997) — two
+> consecutive non-improving epochs, one short of the patience-3 threshold
+> that would have cut the run off before a 10th epoch even started.
 
 **Q: Roughly how long did the full run take, and why?**
-> A: See the real timing captured in `EXPLANATION.md`. It's slower than a
-> typical CPU CIFAR-10 run partly because of the MKL-DNN workaround
-> (§9a/I) — convolutions run through a fallback path rather than the
-> normally-fastest backend — and because this is genuinely full-dataset,
-> full-epoch-count training rather than the fast verification config.
+> A: About **7 hours** on this CPU-only host, run via plain `docker run`
+> with the exact command in the README (not `docker-compose`, not
+> Kubernetes — a local container is sufficient to prove the training image
+> works end-to-end). It's slower than a typical CPU CIFAR-10 run for two
+> compounding reasons: the MKL-DNN workaround (§9a/I) forces convolutions
+> through a slower fallback backend, and this is genuinely full-dataset
+> (50,000 images), full-epoch-count (10) training, not the 5%-subset,
+> 1-epoch `training_config.verify.yaml` used for pipeline smoke tests.
 
-**Q: What accuracy did the final model reach?**
-> A: See the real final `val_accuracy` figure captured in `EXPLANATION.md`
-> / `README.md` from the completed run's last checkpoint.
+**Q: What accuracy did the final model reach, and which epoch's
+checkpoint was actually kept?**
+> A: **86.79% validation accuracy**, from the **epoch 8** checkpoint
+> (val_loss 0.3947 — the lowest of the run). Epochs 9 and 10 pushed
+> accuracy slightly higher (85.71% and 86.91% respectively) but their
+> val_loss was *higher* than epoch 8's, so under the "save only on
+> val_loss improvement" policy (§D/I) they never overwrote
+> `classifier_v1.pt`. This is a good concrete example of why the
+> checkpoint policy tracks loss rather than accuracy: accuracy is
+> single-threshold-sensitive and can wobble upward even as the model's
+> confidence calibration (which loss captures) gets slightly worse.
+
+**Q: How was the resulting checkpoint actually validated, beyond just
+looking at the metrics table?**
+> A: By building the serving image, mounting the fresh checkpoint into a
+> running container, and hitting `/predict` with 6 real CIFAR-10 test
+> images pulled straight out of the dataset's `test_batch` (one per class:
+> cat, ship, airplane, frog, automobile, truck) — images the model never
+> saw during training or validation. Result: 5/6 correct, with >99%
+> confidence on cat, ship, frog, and truck. This exercises the full real
+> path (checkpoint → `load_model()` → FastAPI → inference), not just the
+> training loop's own self-reported metrics.
+
+**Q: What was the one misclassification, and is it a red flag?**
+> A: The airplane image was predicted as "ship" (still with high
+> confidence). This isn't evidence of a broken pipeline — airplane/ship is
+> a well-documented CIFAR-10 confusion pair, since both classes are
+> frequently photographed as a small, light-colored, elongated object
+> against a plain, uniform background (sky or water) at a similar
+> horizontal framing. A single miss out of 6 is exactly what you'd expect
+> from an 86.79%-accuracy model, not a symptom of a data, training, or
+> serving bug.

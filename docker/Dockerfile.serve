@@ -1,10 +1,10 @@
-# Stage 1: base with pinned inference-only dependencies
+# Dependencies
 FROM python:3.11-slim AS base
 WORKDIR /app
 COPY requirements/serve.txt .
 RUN pip install --no-cache-dir -r serve.txt
 
-# Stage 2: serving runtime
+# Serving image
 FROM base AS serving
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl \

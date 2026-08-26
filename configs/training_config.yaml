@@ -12,7 +12,7 @@ training:
 data:
   dataset: cifar10
   data_dir: /app/data
-  subset_fraction: 1.0  # fraction of the dataset to use; <1.0 speeds up local/CI verification runs
+  subset_fraction: 1.0  # use less than 1.0 for a quick check
 
 output:
   checkpoint_dir: /app/checkpoints

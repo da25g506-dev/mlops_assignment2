@@ -1,14 +1,4 @@
-"""FastAPI inference service for the CIFAR-10 image classifier.
-
-Loads a trained checkpoint on startup and exposes:
-  - GET  /health   -> 200 once the model is loaded, 503 otherwise
-  - POST /predict   -> multipart/form-data image upload, returns class
-                        probabilities
-
-Checkpoint location is resolved from the CHECKPOINT_PATH environment
-variable, falling back to the conventional mounted-volume path used by
-the Docker/Kubernetes serving setup.
-"""
+"""FastAPI service for CIFAR-10 predictions."""
 import io
 import os
 import sys

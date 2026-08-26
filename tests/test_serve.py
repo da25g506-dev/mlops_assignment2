@@ -1,4 +1,4 @@
-"""Tests for the FastAPI serving surface."""
+"""Serving tests."""
 import asyncio
 import importlib
 import io

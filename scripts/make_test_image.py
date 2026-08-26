@@ -1,4 +1,4 @@
-"""Export one CIFAR-10 test image for curl-based endpoint checks."""
+"""Write one CIFAR-10 test image to disk."""
 from argparse import ArgumentParser
 from pathlib import Path
 

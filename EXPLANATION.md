@@ -1,44 +1,41 @@
-# Explanation
+# Assignment Reflection
 
-GitHub repository:
-https://github.com/da25g506-dev/mlops-pytorch-pipeline
+- Repository: https://github.com/da25g506-dev/mlops-pytorch-pipeline
+- Final validation PR: https://github.com/da25g506-dev/mlops-pytorch-pipeline/pull/13
+- Command output: [VALIDATION.md](VALIDATION.md)
 
-Final validation PR:
-https://github.com/da25g506-dev/mlops-pytorch-pipeline/pull/13
+I used CIFAR-10 for the project and trained a ResNet-18 model with a modified
+input layer for 32x32 images. The training script reads the YAML config, prints
+loss and accuracy as JSON, stops when validation loss stops improving, and
+saves the best checkpoint. The serving side is a small FastAPI application
+with /health and /predict.
 
-Validation evidence is collected in VALIDATION.md so the final PR body can
-include the same terminal output requested by the assignment.
+The hardest part was not writing the model. It was getting the same code to
+behave properly on my machine, in Docker, and inside Kubernetes.
 
-## Reflection
+The first problem was a crash during convolution on the local AMD CPU. Python
+did not show a traceback; the process exited with SIGFPE. I tested smaller
+parts of the model until a plain Conv2d call reproduced it. Disabling MKL-DNN
+fixed the crash on this machine, so that setting is applied in src/model.py.
 
-The most challenging part of this assignment was getting the same training
-and serving path to work consistently across three environments: local Python,
-Docker, and Kubernetes. The application code is deliberately simple: a
-CIFAR-10 classifier, a YAML-driven training loop, and a FastAPI prediction
-service. Most of the time went into making the operational path reliable.
+The next problem was the Kubernetes training Job taking far longer than the
+same container run directly with Docker. The pod had a two-core CPU limit, but
+PyTorch was creating threads based on the host CPU count. The extra threads
+spent most of their time being throttled. Setting OMP_NUM_THREADS=2 and
+MKL_NUM_THREADS=2 in the Job made the runtime match the pod limit and the test
+Job completed normally.
 
-The first issue was a CPU-specific PyTorch crash. On this host, convolution
-forward passes failed with SIGFPE when the MKL-DNN backend was enabled. The
-failure did not produce a normal Python traceback, so I isolated it by testing
-the model layer by layer and then reproducing the crash with a bare Conv2d
-operation. The fix is in src/model.py: disable MKL-DNN at import time. That
-keeps the code slower on this CPU, but it is predictable and works in every
-entry point that imports the model.
+I also found that the default PyTorch wheel included CUDA packages that were
+not useful on this CPU-only setup. Using the CPU wheel index reduced the image
+sizes without changing the training or inference code.
 
-The second issue appeared only inside the Kubernetes Job. PyTorch sized its
-thread pool from the host CPU count, while the pod was limited to two CPU
-cores. That caused heavy CFS throttling and made the Job look stuck even
-though it was still running. The training manifest now sets OMP_NUM_THREADS
-and MKL_NUM_THREADS to 2, matching the Job's CPU request and limit. After that
-change the verification Job completed normally on kind.
+For validation, I kept two configs. The default config uses all of CIFAR-10
+for ten epochs. The verification config uses one epoch and a small subset, so
+I could test Docker and Kubernetes without waiting several hours each time.
+The default run was still completed separately, and its epoch results are in
+VALIDATION.md.
 
-Docker image size was another practical problem. Installing the default PyPI
-torch wheel pulled in CUDA runtime packages that are unnecessary for a
-CPU-only training and serving demo. Both requirement files now use the
-CPU-only PyTorch wheel index, which keeps the images much smaller while still
-satisfying the assignment's PyTorch requirement.
-
-The final result is a pipeline that can be checked in small pieces: unit tests
-cover model construction and checkpoint loading, Docker proves the runtime
-packaging, and Kubernetes validates the cluster workflow from training Job to
-serving Deployment and prediction request.
+The main lesson from this assignment was that the model is only one part of
+the system. Config paths, mounted storage, CPU limits, container users, health
+checks, and repeatable test commands all affected whether the application
+actually worked after leaving the local Python environment.

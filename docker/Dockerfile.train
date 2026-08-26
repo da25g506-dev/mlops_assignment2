@@ -1,10 +1,10 @@
-# Stage 1: base with pinned training dependencies
+# Dependencies
 FROM python:3.11-slim AS base
 WORKDIR /app
 COPY requirements/train.txt .
 RUN pip install --no-cache-dir -r train.txt
 
-# Stage 2: training runtime — copy only the app code needed to train
+# Training image
 FROM base AS training
 COPY src/model.py src/dataset.py src/train.py ./src/
 COPY configs/ ./configs/

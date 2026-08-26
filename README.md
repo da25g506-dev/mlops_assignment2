@@ -4,7 +4,7 @@ PyTorch CIFAR-10 training and serving pipeline for the MLOps assignment. The
 repo contains the model code, Docker images, Kubernetes manifests, CI checks,
 and validation evidence needed for submission.
 
-Target repository URL after the required GitHub rename:
+GitHub repository:
 https://github.com/da25g506-dev/mlops-pytorch-pipeline
 
 ## Assignment Coverage
@@ -222,7 +222,8 @@ The local history shows the required branch pattern:
   - #2 feature/pytorch-model
   - #3 feature/docker-training
   - #4 feature/k8s-deployment
-- Release PR #5 merged develop into main.
+- Initial release PR #5 merged the implementation into main.
+- Final validation release PR #13 merged the submission hardening into main.
 - Later documentation PRs #6-#11 kept the same PR-based workflow.
 
 Use Conventional Commit style for any follow-up commit. Because this cleanup

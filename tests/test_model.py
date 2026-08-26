@@ -1,4 +1,4 @@
-"""Unit tests for the model architecture, checkpointing, and config loading."""
+"""Model, checkpoint, and config tests."""
 import sys
 from pathlib import Path
 

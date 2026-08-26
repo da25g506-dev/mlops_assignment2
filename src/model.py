@@ -1,22 +1,14 @@
-"""CNN model definitions for CIFAR-10 / Fashion-MNIST classification."""
+"""Models used by the CIFAR-10 training and serving code."""
 import torch
 import torch.nn as nn
 from torchvision.models import resnet18
 
-# Some AMD EPYC hosts hit a SIGFPE inside MKL-DNN's convolution kernel
-# (oneDNN CPU-dispatch bug); disabling the MKL-DNN backend avoids it at a
-# small CPU perf cost and has no effect on correctness or GPU execution.
+# Work around a oneDNN convolution crash seen on the local AMD CPU.
 torch.backends.mkldnn.enabled = False
 
 
 def _resnet18_for_small_images(num_classes: int, pretrained: bool = False) -> nn.Module:
-    """ResNet-18 adapted for 32x32 inputs (CIFAR-10/Fashion-MNIST).
-
-    The stock torchvision ResNet-18 stem (7x7 stride-2 conv + maxpool) was
-    designed for 224x224 ImageNet images and downsamples 32x32 inputs to
-    nothing useful. We swap in a 3x3 stride-1 stem and drop the maxpool,
-    which is the standard adaptation used for CIFAR-scale ResNets.
-    """
+    """Adapt ResNet-18 to 32x32 images."""
     weights = "IMAGENET1K_V1" if pretrained else None
     model = resnet18(weights=weights)
     model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -26,7 +18,7 @@ def _resnet18_for_small_images(num_classes: int, pretrained: bool = False) -> nn
 
 
 class SimpleCNN(nn.Module):
-    """A small from-scratch CNN, offered as a lighter alternative to ResNet-18."""
+    """Small CNN used for quick checks."""
 
     def __init__(self, num_classes: int = 10):
         super().__init__()
@@ -58,7 +50,7 @@ class SimpleCNN(nn.Module):
 
 
 def get_model(architecture: str, num_classes: int = 10, pretrained: bool = False) -> nn.Module:
-    """Factory for the model architectures supported by this project."""
+    """Build a configured model."""
     architecture = architecture.lower()
     if architecture == "resnet18":
         return _resnet18_for_small_images(num_classes=num_classes, pretrained=pretrained)

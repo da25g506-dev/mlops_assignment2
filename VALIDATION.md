@@ -80,15 +80,13 @@ persistentvolumeclaim/model-checkpoints-pvc unchanged (dry run)
 job.batch/cifar10-training-job-gpu created (dry run)
 ~~~
 
-Recent GitHub Actions runs for the public repository were also green:
+The final main-branch runs also passed:
 
 ~~~text
-$ gh run list -R da25g506-dev/mlops_assignment2 --limit 10
-completed success Merge pull request #11 from da25g506-dev/develop CI develop push 30786556944
-completed success Merge pull request #11 from da25g506-dev/develop CI main push 30786541879
-completed success release: STUDY_GUIDE.md real training numbers CI develop pull_request 30786373003
-completed success Merge pull request #10 from da25g506-dev/docs/study-guide-real-numbers CI develop push 30786358133
-completed success docs: fill in STUDY_GUIDE.md with real training numbers CI docs/study-guide-real-numbers pull_request 30786160675
+$ gh run list -R da25g506-dev/mlops-pytorch-pipeline --branch main --limit 3
+completed success Merge pull request #14 from da25g506-dev/docs/final-pr-link-13 CI main push 32959486524 3m43s
+completed success Merge pull request #13 from da25g506-dev/develop CI main push 32956957030 3m53s
+completed success Merge pull request #11 from da25g506-dev/develop CI main push 30786541879 4m33s
 ~~~
 
 ## Docker Validation

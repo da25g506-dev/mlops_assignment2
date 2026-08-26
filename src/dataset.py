@@ -1,4 +1,4 @@
-"""Dataset loading and transforms for CIFAR-10."""
+"""CIFAR-10 datasets and transforms."""
 import torch
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
@@ -26,11 +26,7 @@ def get_transforms(train: bool = True) -> transforms.Compose:
 
 
 def _maybe_subset(dataset: torch.utils.data.Dataset, fraction: float) -> torch.utils.data.Dataset:
-    """Deterministically shrink a dataset to `fraction` of its size.
-
-    Used to keep local/CI verification runs fast; production training keeps
-    fraction=1.0 and trains on the full dataset.
-    """
+    """Return a repeatable subset for quick checks."""
     if fraction >= 1.0:
         return dataset
     if not 0.0 < fraction < 1.0:

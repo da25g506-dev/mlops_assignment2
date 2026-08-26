@@ -1,17 +1,5 @@
-# Bonus (Part D, +5 pts): GPU-enabled variant of the training Job.
-#
-# This is an alternate to training-job.yaml for clusters that have GPU
-# nodes available (e.g. a cloud GKE/EKS node pool with NVIDIA GPUs, or a
-# bare-metal cluster with the NVIDIA device plugin installed). It adds:
-#   - a `nvidia.com/gpu: 1` resource request/limit
-#   - a nodeSelector restricting scheduling to GPU-labeled nodes
-#   - a toleration for the standard `nvidia.com/gpu=present:NoSchedule` taint
-#     that GPU node pools are commonly tainted with
-#
-# It is not applied during the kind-based local validation in this repo
-# (kind nodes have no GPUs), but is included to satisfy the bonus
-# requirement and to show how the base manifest would be adapted for a
-# real GPU cluster.
+# Optional GPU training Job. Requires the NVIDIA device plugin and a node
+# matching the selector and toleration below.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

@@ -1,11 +1,4 @@
-"""Training entrypoint for the CIFAR-10 image classifier.
-
-Reads hyperparameters from a YAML config (path resolved from the
-TRAINING_CONFIG_PATH environment variable, falling back to the
-conventional mounted-volume location and then a local dev path),
-runs a training loop with early stopping, logs metrics as JSON lines
-to stdout, and checkpoints the best model seen so far.
-"""
+"""Train the CIFAR-10 classifier and save the best checkpoint."""
 import json
 import os
 import sys

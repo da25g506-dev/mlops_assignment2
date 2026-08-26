@@ -12,6 +12,6 @@ COPY configs/ ./configs/
 ENV PYTHONUNBUFFERED=1
 ENV TRAINING_CONFIG_PATH=/app/configs/training_config.yaml
 
-# /app/data and /app/checkpoints are expected to be mounted volumes
-# (see docker/README verification commands and k8s/training-job.yaml).
+# /app/data and /app/checkpoints are expected to be mounted volumes.
+# See README.md and k8s/training-job.yaml for the matching run commands.
 ENTRYPOINT ["python", "src/train.py"]

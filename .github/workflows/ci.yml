@@ -32,7 +32,7 @@ jobs:
           pip install pytest ruff
 
       - name: Lint (ruff)
-        run: ruff check src/ tests/
+        run: ruff check src/ tests/ scripts/
 
       - name: Run unit tests
         run: pytest tests/ -v

@@ -1,10 +1,10 @@
 # Explanation
 
-GitHub repository after the required rename:
+GitHub repository:
 https://github.com/da25g506-dev/mlops-pytorch-pipeline
 
-Final validation PR after the rename:
-https://github.com/da25g506-dev/mlops-pytorch-pipeline/pull/5
+Final validation PR:
+https://github.com/da25g506-dev/mlops-pytorch-pipeline/pull/13
 
 Validation evidence is collected in VALIDATION.md so the final PR body can
 include the same terminal output requested by the assignment.
